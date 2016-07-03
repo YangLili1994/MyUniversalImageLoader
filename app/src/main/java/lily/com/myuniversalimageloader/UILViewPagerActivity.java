@@ -34,7 +34,7 @@ public class UILViewPagerActivity extends Activity {
         @Override
         public void handleMessage(Message msg) {
             Log.d(TAG, "have receive a msg");
-            int curindex = mViewPager.getCurrentItem()+1;
+            int curindex = (mViewPager.getCurrentItem()+1)%(Constants.images.length+2);
             mViewPager.setCurrentItem(curindex,true);
         }
     };
@@ -61,9 +61,6 @@ public class UILViewPagerActivity extends Activity {
 
 
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            Boolean isScrolled = false;
-            Boolean isHalfScrolled = false;
-
             /**
              * 当页面在滑动了调用
              * @param position 当前页面，即点击滑动的页面
@@ -73,11 +70,11 @@ public class UILViewPagerActivity extends Activity {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
-                Log.d(TAG, "position   positionoffset" + "   " + position + "   " + positionOffset);
-
                 if (position == Constants.images.length && positionOffset > 0.99) {
+                    //在position4左滑且左滑positionOffset百分比接近1时，偷偷替换为position1（原本会滑到position5）
                     mViewPager.setCurrentItem(1, false);
                 } else if (position == 0 && positionOffset < 0.01) {
+                    //在position1右滑且右滑百分比接近0时，偷偷替换为position4（原本会滑到position0）
                     mViewPager.setCurrentItem(4, false);
                 }
             }
@@ -133,13 +130,12 @@ public class UILViewPagerActivity extends Activity {
         public ImagePagerAdapter(String[] images) {
             this.images = images;
             this.inflater = getLayoutInflater();
-
         }
 
         @Override
         public int getCount() {
-           // return Integer.MAX_VALUE;
-            return images.length+2;
+            //返回实际要显示的图片数+2
+            return images.length + 2;
         }
 
         @Override
@@ -150,23 +146,18 @@ public class UILViewPagerActivity extends Activity {
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
             //注意不要remove  否则容易闪屏
-          //  ((ViewPager)container).removeView((View) object);
+            //  ((ViewPager)container).removeView((View) object);
         }
-
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
 
             View mView = View.inflate(getApplicationContext(),R.layout.activity_uil_viewpager_item,null);
-
+            //这是重点
             int realPosition = (position - 1 + images.length)%images.length;
-
 
             ImageView imageView = (ImageView) mView.findViewById(R.id.myimage);
             final ProgressBar bar = (ProgressBar) mView.findViewById(R.id.loading);
-
-            Log.d("mytest","position:"+position);
-
 
             mView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -175,7 +166,7 @@ public class UILViewPagerActivity extends Activity {
                 }
             });
 
-
+            //通过UIL加载图片
             imageLoader.displayImage(images[realPosition], imageView, ImageLoaderHelper.getInstance(getApplicationContext()).getSimpleDisplayImageOptions(),
                     new SimpleImageLoadingListener() {
 
@@ -216,8 +207,6 @@ public class UILViewPagerActivity extends Activity {
                                     break;
                             }
 
-                            //Toast.makeText(getApplicationContext(),message,Toast.LENGTH_LONG).show();
-
                             bar.setVisibility(View.GONE);
                         }
                     }, new ImageLoadingProgressListener() {
@@ -225,7 +214,6 @@ public class UILViewPagerActivity extends Activity {
                         public void onProgressUpdate(String s, View view, int i, int i1) {//在这里更新 ProgressBar的进度信息
 
                             int progress = 100*i/i1;
-                            //Log.d(TAG,"progress:"+progress+"%");
                             bar.setProgress(progress);
 
                         }
